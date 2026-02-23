@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoZeroRead</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 300px;
+    }
+
+    .streak {
+      font-size: 64px;
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 15px 20px;
+      font-size: 18px;
+      border-radius: 12px;
+      border: none;
+      background: white;
+      color: black;
+    }
+
+    button:active {
+      opacity: 0.7;
+    }
+
+    .lost {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div style="font-size: 50px;">🔥</div>
+  <div class="streak" id="streak">0</div>
+  <button onclick="logReading()">Ik heb 5 minuten gelezen</button>
+  <div id="message"></div>
+</div>
+
+<script>
+  const streakEl = document.getElementById("streak");
+  const messageEl = document.getElementById("message");
+
+  function formatDate(date) {
+    return date.toISOString().split("T")[0];
+  }
+
+  function getToday() {
+    return formatDate(new Date());
+  }
+
+  function getYesterday() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return formatDate(d);
+  }
+
+  function loadData() {
+    return JSON.parse(localStorage.getItem("readingData")) || {
+      streak: 0,
+      lastDate: null
+    };
+  }
+
+  function saveData(data) {
+    localStorage.setItem("readingData", JSON.stringify(data));
+  }
+
+  function updateUI() {
+    const data = loadData();
+    const today = getToday();
+    const yesterday = getYesterday();
+
+    if (data.lastDate && data.lastDate !== today && data.lastDate !== yesterday) {
+      data.streak = 0;
+      saveData(data);
+      messageEl.innerHTML = "<div class='lost'>Je streak is verbroken 💀</div>";
+    }
+
+    streakEl.textContent = data.streak;
+  }
+
+  function logReading() {
+    const data = loadData();
+    const today = getToday();
+    const yesterday = getYesterday();
+
+    if (data.lastDate === today) {
+      messageEl.innerHTML = "Vandaag al gelogd 🔥";
+      return;
+    }
+
+    if (data.lastDate === yesterday) {
+      data.streak += 1;
+    } else {
+      data.streak = 1;
+    }
+
+    data.lastDate = today;
+    saveData(data);
+    messageEl.innerHTML = "Streak beschermd 🔥";
+    updateUI();
+  }
+
+  updateUI();
+
+  if ("Notification" in window) {
+    Notification.requestPermission();
+  }
+</script>
+
+</body>
+</html>
